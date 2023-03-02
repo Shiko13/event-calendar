@@ -1,0 +1,50 @@
+version: '3.1'
+services:
+  stats-server:
+    build: stats/stats-server
+    image: stats-server
+    container_name: stats-server
+    ports:
+      - "9090:9090"
+    depends_on:
+      - stats-db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/statistics
+
+  stats-db:
+    image: postgres:14-alpine
+    container_name: stats-db
+    volumes:
+      - /var/lib/postgresql/data/
+    ports:
+      - "6541:5432"
+    environment:
+      - POSTGRES_DB=statistics
+      - POSTGRES_USER=sa
+      - POSTGRES_PASSWORD=password
+
+  ec-service:
+    build: ec-service
+    image: ec-service
+    container_name: ec-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - stats-server
+      - ec-db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ec-db:5432/ec
+      - stats-server.url=http://stats-server:9090
+
+  ec-db:
+    image: postgres:14-alpine
+    container_name: ec
+    volumes:
+      - /var/lib/postgresql/data/
+    ports:
+      - "6542:5432"
+    environment:
+      - POSTGRES_DB=ec
+      - POSTGRES_USER=sa
+      - POSTGRES_PASSWORD=password
+
